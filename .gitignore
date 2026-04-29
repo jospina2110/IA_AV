@@ -50,3 +50,6 @@ secret.h
 Thumbs.db
 node_modules/
 dist/
+backend/app/database/events.json
+frontend/src/api.js
+frontend/src/components/liveStatus.jsx
