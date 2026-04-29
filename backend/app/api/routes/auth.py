@@ -1,20 +1,24 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas.auth import LoginRequest
-from app.core.security import (
-    create_access_token,
-    verify_password,
-    hash_password,
+from app.schemas.auth import (
+    LoginRequest,
+    RegisterRequest,
 )
+from app.core.security import create_access_token
 from app.core.config import settings
+from app.services.user_service import (
+    create_user,
+    get_user,
+)
 
 router = APIRouter()
 
 # =========================
-# TEMP ADMIN USER
+# ADMIN USER PRINCIPAL
 # =========================
 fake_admin = {
     "username": settings.ADMIN_USERNAME,
-    "password_hash": hash_password(settings.ADMIN_PASSWORD),
+    "password": settings.ADMIN_PASSWORD,
+    "role": "admin",
 }
 
 
@@ -24,26 +28,101 @@ fake_admin = {
 @router.post("/auth/login")
 def login(credentials: LoginRequest):
 
-    if credentials.username != fake_admin["username"]:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    print("===== LOGIN DEBUG =====")
+    print("INPUT USERNAME:", credentials.username)
+    print("=======================")
 
-    if not verify_password(credentials.password, fake_admin["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # =====================
+    # LOGIN ADMIN
+    # =====================
+    if (
+        credentials.username == fake_admin["username"]
+        and credentials.password == fake_admin["password"]
+    ):
 
-    token = create_access_token({"sub": credentials.username, "role": "admin"})
+        token = create_access_token(
+            {
+                "sub": credentials.username,
+                "role": "admin",
+            }
+        )
+
+        return {
+            "status": "success",
+            "access_token": token,
+            "token_type": "bearer",
+            "user": credentials.username,
+            "role": "admin",
+        }
+
+    # =====================
+    # LOGIN USUARIO NORMAL
+    # =====================
+    user = get_user(credentials.username)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario o contraseña incorrectos",
+        )
+
+    if credentials.password != user["password"]:
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario o contraseña incorrectos",
+        )
+
+    token = create_access_token(
+        {
+            "sub": credentials.username,
+            "role": user.get("role", "user"),
+        }
+    )
 
     return {
         "status": "success",
         "access_token": token,
         "token_type": "bearer",
         "user": credentials.username,
-        "role": "admin",
+        "role": user.get("role", "user"),
     }
 
 
 # =========================
-# HEALTH
+# REGISTRO
+# =========================
+@router.post("/auth/register")
+def register(user_data: RegisterRequest):
+
+    existing_user = get_user(user_data.username)
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="El usuario ya existe",
+        )
+
+    new_user = create_user(
+        username=user_data.username,
+        password=user_data.password,
+        role="user",
+    )
+
+    return {
+        "status": "success",
+        "message": "Usuario registrado correctamente",
+        "user": new_user["username"],
+        "role": new_user["role"],
+    }
+
+
+# =========================
+# AUTH HEALTH
 # =========================
 @router.get("/auth/health")
 def auth_health():
-    return {"status": "success", "message": "Auth system active"}
+    return {
+        "status": "success",
+        "message": "Auth system active",
+        "admin_user_loaded": settings.ADMIN_USERNAME,
+    }

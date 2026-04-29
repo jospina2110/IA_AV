@@ -9,6 +9,7 @@ import os
 from app.api.routes.upload import router as upload_router
 from app.api.routes.events import router as events_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.devices import router as devices_router
 
 # =========================
 # CONFIG

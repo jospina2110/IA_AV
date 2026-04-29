@@ -18,9 +18,10 @@ class Settings:
     # =========================
     # YOLO
     # =========================
-    YOLO_MODEL: str = os.getenv("YOLO_MODEL", "yolov8m.pt")
+    YOLO_MODEL: str = os.getenv("YOLO_MODEL", "yolov8n.pt")
     YOLO_CONF: float = float(os.getenv("YOLO_CONF", "0.35"))
     YOLO_IOU: float = float(os.getenv("YOLO_IOU", "0.5"))
+    YOLO_PPE_MODEL: str = os.getenv("YOLO_PPE_MODEL", "app/models/best.pt")
 
     # =========================
     # ESP32 AUTH
