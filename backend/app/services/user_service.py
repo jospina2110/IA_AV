@@ -3,29 +3,22 @@ import os
 from threading import Lock
 
 from app.models.user import User
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 
 USERS_FILE = "data/users.json"
+USERS_TMP = USERS_FILE + ".tmp"
 _lock = Lock()
 
 
-# =========================
-# FILE INIT
-# =========================
 def _ensure_file():
     os.makedirs("data", exist_ok=True)
-
     if not os.path.exists(USERS_FILE):
         with open(USERS_FILE, "w", encoding="utf-8") as f:
             json.dump([], f)
 
 
-# =========================
-# LOAD USERS
-# =========================
-def load_users():
+def _read() -> list[dict]:
     _ensure_file()
-
     try:
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -34,71 +27,55 @@ def load_users():
         return []
 
 
-# =========================
-# SAVE USERS
-# =========================
-def save_users(users):
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
+def _write(users: list[dict]) -> None:
+    with open(USERS_TMP, "w", encoding="utf-8") as f:
         json.dump(users, f, indent=2, ensure_ascii=False)
+    os.replace(USERS_TMP, USERS_FILE)
 
 
-# =========================
-# FIND USER
-# =========================
-def get_user(username: str):
-    users = load_users()
-
-    for user in users:
-        if user["username"] == username:
-            return user
-
-    return None
-
-
-# =========================
-# REGISTER USER
-# =========================
-def register_user(username: str, password: str, role: str = "user"):
+def get_user(username: str) -> dict | None:
     with _lock:
-        users = load_users()
+        users = _read()
+    return next((u for u in users if u.get("username") == username), None)
 
-        # Verificar si existe
-        for user in users:
-            if user["username"] == username:
-                return None
 
+def authenticate_user(username: str, password: str) -> dict | None:
+    user = get_user(username)
+    if not user:
+        return None
+    if not verify_password(password, user["password_hash"]):
+        return None
+    return user
+
+
+def create_user(username: str, password: str, role: str = "user") -> dict:
+    with _lock:
+        users = _read()
+        if any(u.get("username") == username for u in users):
+            raise ValueError(f"Usuario '{username}' ya existe")
         new_user = User(
             username=username,
             password_hash=hash_password(password),
             role=role,
         )
-
         users.append(new_user.to_dict())
-
-        save_users(users)
-
-        return new_user
+        _write(users)
+    return new_user.to_dict()
 
 
-# =========================
-# LIST USERS
-# =========================
-def list_users():
-    return load_users()
+register_user = create_user
 
 
-# =========================
-# DELETE USER
-# =========================
-def delete_user(username: str):
+def list_users() -> list[dict]:
     with _lock:
-        users = load_users()
+        return _read()
 
-        filtered_users = [user for user in users if user["username"] != username]
 
-        if len(filtered_users) == len(users):
+def delete_user(username: str) -> bool:
+    with _lock:
+        users = _read()
+        filtered = [u for u in users if u.get("username") != username]
+        if len(filtered) == len(users):
             return False
-
-        save_users(filtered_users)
-
-        return True
+        _write(filtered)
+    return True

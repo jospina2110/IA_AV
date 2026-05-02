@@ -1,0 +1,47 @@
+services:
+
+  # ── Backend FastAPI + YOLOv8 ──────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smartsite-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/data:/app/data                        # eventos JSON
+      - ./backend/data/images:/app/data/images          # imágenes raw
+      - ./backend/data/processed:/app/data/processed    # imágenes procesadas
+    ports:
+      - "8000:8000"     # ESP32 apunta directo a este puerto
+    networks:
+      - smartsite
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s   # tiempo para que YOLOv8 cargue
+
+  # ── Frontend React + Nginx ────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartsite-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy   # espera que el backend esté listo
+    networks:
+      - smartsite
+
+networks:
+  smartsite:
+    driver: bridge
+
+volumes:
+  data:

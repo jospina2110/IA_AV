@@ -9,7 +9,7 @@
 // WIFI
 // ===========================
 const char* ssid     = WIFI_SSID;
-const char* password = WIFI_PASS;
+const char* password = WIFI_PASSWORD;
 
 // ===========================
 // BACKEND

@@ -36,6 +36,9 @@ def check_alerts(result: dict) -> list[str]:
     if helmet_status == "not_detected":
         alerts.append("⚠️ Casco no detectado")
 
+    if result.get("helmet_status") == "partial":  # ✅ nuevo
+        alerts.append("⚠️ Casco parcial — alguien sin EPP")
+
     return alerts
 
 
@@ -58,10 +61,7 @@ async def upload_image(
     image_bytes = await request.body()
 
     if not image_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail="No se recibió imagen"
-        )
+        raise HTTPException(status_code=400, detail="No se recibió imagen")
 
     try:
         # =========================
@@ -92,10 +92,7 @@ async def upload_image(
         detection_result = DetectionResult(
             persons=raw_result.get("persons", 0),
             helmets=raw_result.get("helmets", 0),
-            helmet_status=raw_result.get(
-                "helmet_status",
-                "not_implemented"
-            ),
+            helmet_status=raw_result.get("helmet_status", "not_implemented"),
             processed_image=processed_image_url,
         )
 
@@ -113,10 +110,12 @@ async def upload_image(
         # =========================
         # EVENTO FINAL
         # =========================
-        save_event({
-            "timestamp": datetime.now().isoformat(),
-            "data": event_data.model_dump(),
-        })          
+        save_event(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "data": event_data.model_dump(),
+            }
+        )
 
         # =========================
         # TELEGRAM
@@ -130,10 +129,7 @@ async def upload_image(
                     f"🪖 Casco: {detection_result.helmet_status}\n"
                     f"⚠️ Alertas: {', '.join(alerts)}"
                 ),
-                image_path=raw_result.get(
-                    "processed_image",
-                    file_path
-                ),
+                image_path=raw_result.get("processed_image", file_path),
                 key=f"{device['device_id']}_alert",
             )
 
@@ -155,6 +151,5 @@ async def upload_image(
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Upload processing error: {str(e)}"
+            status_code=500, detail=f"Upload processing error: {str(e)}"
         )

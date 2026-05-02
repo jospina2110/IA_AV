@@ -66,6 +66,8 @@ app.include_router(events_router, prefix="/api", tags=["Events Dashboard"])
 
 app.include_router(auth_router, prefix="/api", tags=["Authentication"])
 
+app.include_router(devices_router, prefix="/api", tags=["Devices"])
+
 
 # =========================
 # ROOT

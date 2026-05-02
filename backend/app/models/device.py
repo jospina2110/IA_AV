@@ -1,11 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
-# =========================
-# REQUEST REGISTRO DISPOSITIVO
-# =========================
 class DeviceRegisterRequest(BaseModel):
     device_id: str = Field(..., min_length=3, max_length=50)
     name: str = Field(..., min_length=2, max_length=100)
@@ -13,18 +10,12 @@ class DeviceRegisterRequest(BaseModel):
     enabled: bool = True
 
 
-# =========================
-# REQUEST UPDATE DISPOSITIVO
-# =========================
 class DeviceUpdateRequest(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     enabled: Optional[bool] = None
 
 
-# =========================
-# RESPONSE INFO DISPOSITIVO
-# =========================
 class DeviceResponse(BaseModel):
     device_id: str
     api_key: str
@@ -34,26 +25,21 @@ class DeviceResponse(BaseModel):
     created_at: datetime
 
 
-# =========================
-# RESPONSE SIMPLE STATUS
-# =========================
 class DeviceStatusResponse(BaseModel):
     status: str
     message: str
 
 
-# =========================
-# MODELO INTERNO DISPOSITIVO
-# =========================
 class Device(BaseModel):
     device_id: str
-    api_key: str = "ESP32_SECURE_KEY_AV_2026_X9"
+    api_key: str = Field(default="ESP32_SECURE_KEY_AV_2026_X9")
     name: str
     location: Optional[str] = None
     enabled: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    # ✅ default_factory evalúa en cada instancia, no al importar
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "device_id": self.device_id,
             "api_key": self.api_key,
