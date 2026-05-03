@@ -38,130 +38,175 @@ export default function Dashboard() {
     navigate("/login");
   };
 
-const data = latest?.data?.data?.result || latest?.data?.result;
-const persons = data?.persons ?? 0;
-const helmetStatus = data?.helmet_status ?? "N/A";
-const alertCount = events.filter(
-  (e) => (e.data?.data?.alerts || e.data?.alerts || []).length > 0
-).length;
-const isDanger = helmetStatus === "not_detected" && persons > 0;
+  const data = latest?.data?.data?.result || latest?.data?.result;
+  const persons = data?.persons ?? 0;
+  const helmetStatus = data?.helmet_status ?? "N/A";
+  const alertCount = events.filter(
+    (e) => (e.data?.data?.alerts || e.data?.alerts || []).length > 0
+  ).length;
+  const isDanger = helmetStatus === "not_detected" && persons > 0;
+
   return (
     <div style={s.page}>
-      {/* Fondo */}
-      <div style={s.grid} />
-      {isDanger && <div style={s.dangerGlow} />}
+      <div style={s.matrixRain} />
+      <div style={s.scanlines} />
+      <div style={s.vignette} />
+      {isDanger && <div style={s.glitchOverlay} />}
 
-      {/* NAVBAR */}
       <nav style={s.nav}>
         <div style={s.navLeft}>
-          <div style={s.navIcon}>⚙</div>
-          <div>
-            <div style={s.navTitle}>SMARTSITE</div>
-            <div style={s.navSub}>AI SECURITY · OBRA INTELIGENTE</div>
+          <div style={s.logo}>
+            <span style={s.logoBracket}>[</span>
+            <span style={s.logoText}>SMARTSITE</span>
+            <span style={s.logoBracket}>]</span>
+          </div>
+          <div style={s.navSub}>
+            <span style={s.blink}>●</span> AI SECURITY v2.0
           </div>
         </div>
 
         <div style={s.navCenter}>
-          <div style={online ? s.statusOnline : s.statusOffline}>
-            <span style={online ? s.dotGreen : s.dotRed} />
-            {online ? "BACKEND ONLINE" : "SIN CONEXIÓN"}
+          <div style={s.statusBadge}>
+            <span style={{...s.statusDot, background: online ? '#00ff41' : '#ff073a'}} />
+            <span style={s.statusText}>{online ? "ONLINE" : "OFFLINE"}</span>
           </div>
           {lastUpdate && (
-            <span style={s.lastUpdate}>
-              ACT: {lastUpdate.toLocaleTimeString("es-CO")}
-            </span>
+            <div style={s.timestamp}>
+              SYNC: {lastUpdate.toLocaleTimeString("es-CO")}
+            </div>
           )}
         </div>
 
         <button onClick={handleLogout} style={s.logoutBtn}>
-          SALIR →
+          <span style={s.btnBracket}>[</span>
+          LOGOUT
+          <span style={s.btnBracket}>]</span>
         </button>
       </nav>
 
-      {/* ALERTA BANNER */}
       {isDanger && (
         <div style={s.alertBanner}>
-          <span style={s.alertBannerDot} />
-          ⚠ ALERTA ACTIVA — PERSONA SIN CASCO DETECTADA EN OBRA
-          <span style={s.alertBannerDot} />
+          <div style={s.alertMarquee}>
+            ⚠ ALERTA: SISTEMA DETECTA INCUMPLIMIENTO EN OBRA — SIN EQUIPO DE PROTECCIÓN ⚠ ALERTA: SISTEMA DETECTA INCUMPLIMIENTO EN OBRA —
+          </div>
         </div>
       )}
 
       <main style={s.main}>
-        {/* KPI ROW */}
-        <div style={s.kpiRow}>
+        <div style={s.kpiGrid}>
           <StatusCard
             icon="👷"
-            label="PERSONAS DETECTADAS"
+            label="PERSONAS"
             value={persons}
             accent={persons > 0}
+            sublabel="DETECTADAS"
           />
           <StatusCard
-            icon="🪖"
-            label="ESTADO DE CASCO"
-            value={helmetStatus.toUpperCase()}
+            icon="⛑"
+            label="CASCO"
+            value={helmetStatus === "detected" ? "OK" : helmetStatus === "not_detected" ? "N/A" : "N/A"}
             danger={isDanger}
             accent={helmetStatus === "detected"}
+            sublabel="ESTADO"
           />
           <StatusCard
-            icon="🚨"
-            label="ALERTAS TOTALES"
+            icon="⚡"
+            label="ALERTAS"
             value={alertCount}
             danger={alertCount > 0}
+            sublabel="TOTALES"
           />
           <StatusCard
-            icon="📸"
-            label="IMÁGENES PROCESADAS"
+            icon="📊"
+            label="EVENTOS"
             value={events.length}
+            sublabel="PROCESADOS"
           />
         </div>
 
-        {/* MAIN GRID */}
-        <div style={s.grid2}>
-          {/* LIVE FEED */}
-          <div style={s.panel}>
+        <div style={s.contentGrid}>
+          <div style={s.feedPanel}>
             <div style={s.panelHeader}>
-              <span style={s.panelTitle}>FEED EN VIVO</span>
-              <span style={s.panelSub}>ESP32-CAM · YOLOv8</span>
+              <div style={s.panelTitleRow}>
+                <span style={s.panelIcon}>◈</span>
+                <span style={s.panelTitle}>LIVE FEED</span>
+                <div style={s.liveIndicator}>
+                  <span style={s.liveDot} /> EN VIVO
+                </div>
+              </div>
+              <div style={s.panelMeta}>ESP32-CAM • YOLOv8 • REAL-TIME</div>
             </div>
-            <LiveFeed latest={latest} />
+            <LiveFeed latest={latest} isDanger={isDanger} />
           </div>
 
-          {/* EVENTOS */}
-          <div style={s.panel}>
+          <div style={s.eventsPanel}>
             <div style={s.panelHeader}>
-              <span style={s.panelTitle}>REGISTRO DE EVENTOS</span>
-              <span style={s.panelSub}>{events.length} total · cada 3s</span>
+              <div style={s.panelTitleRow}>
+                <span style={s.panelIcon}>▣</span>
+                <span style={s.panelTitle}>EVENT LOG</span>
+                <div style={s.eventCount}>{events.length} ENTRIES</div>
+              </div>
+              <div style={s.panelMeta}>BUFFER: 3S INTERVAL</div>
             </div>
             <EventsPanel events={events} />
+          </div>
+        </div>
+
+        <div style={s.footer}>
+          <div style={s.footerLeft}>
+            <span style={s.terminalPrompt}>root@smartsite:~$</span>
+            <span style={s.typing}> monitor --active</span>
+          </div>
+          <div style={s.footerRight}>
+            <span style={s.version}>BUILD 2026.05.03</span>
           </div>
         </div>
       </main>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Barlow+Condensed:wght@400;600;800&display=swap');
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes gridMove {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(40px); }
+        @keyframes matrixRain {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 0% 100%; }
+        }
+        @keyframes scanline {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        @keyframes glitch {
+          0% { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 1px); }
+          20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+          40% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 2px); }
+          60% { clip-path: inset(10% 0 70% 0); transform: translate(1px, -2px); }
+          80% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 1px); }
+          100% { clip-path: inset(30% 0 50% 0); transform: translate(2px, -1px); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-        @keyframes dangerPulse {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 0.3; }
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
         }
         @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes borderGlow {
+          0%, 100% { border-color: rgba(255, 120, 0, 0.3); }
+          50% { border-color: rgba(255, 120, 0, 0.6); }
+        }
+        @keyframes typing {
+          from { width: 0; }
+          to { width: 100%; }
         }
       `}</style>
     </div>
@@ -171,69 +216,95 @@ const isDanger = helmetStatus === "not_detected" && persons > 0;
 const s = {
   page: {
     minHeight: "100vh",
-    background: "#080a0e",
+    background: "#000000",
     fontFamily: "'Barlow Condensed', sans-serif",
     position: "relative",
     overflow: "hidden",
   },
-  grid: {
+  matrixRain: {
     position: "fixed",
     inset: 0,
-    backgroundImage: `
-      linear-gradient(rgba(255,120,0,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,120,0,0.04) 1px, transparent 1px)
+    background: `
+      linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(0, 255, 65, 0.03) 50%, 
+        transparent 100%)
     `,
-    backgroundSize: "40px 40px",
-    animation: "gridMove 6s linear infinite",
+    backgroundSize: "100% 4px",
+    animation: "matrixRain 8s linear infinite",
     pointerEvents: "none",
     zIndex: 0,
   },
-  dangerGlow: {
+  scanlines: {
     position: "fixed",
     inset: 0,
-    background: "radial-gradient(ellipse at center, rgba(255,30,0,0.12) 0%, transparent 70%)",
-    animation: "dangerPulse 1.5s ease-in-out infinite",
+    background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)",
     pointerEvents: "none",
-    zIndex: 0,
+    zIndex: 1,
+  },
+  vignette: {
+    position: "fixed",
+    inset: 0,
+    background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)",
+    pointerEvents: "none",
+    zIndex: 2,
+  },
+  glitchOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(255, 0, 50, 0.05)",
+    animation: "glitch 0.3s ease-in-out infinite",
+    pointerEvents: "none",
+    zIndex: 3,
   },
   nav: {
     position: "relative",
-    zIndex: 10,
+    zIndex: 100,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "16px 32px",
-    borderBottom: "1px solid rgba(255,120,0,0.15)",
-    background: "rgba(8,10,14,0.9)",
+    padding: "12px 28px",
+    borderBottom: "1px solid rgba(255, 120, 0, 0.2)",
+    background: "linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(10,10,10,0.9) 100%)",
     backdropFilter: "blur(10px)",
   },
   navLeft: {
     display: "flex",
-    alignItems: "center",
-    gap: 12,
+    flexDirection: "column",
+    gap: 2,
   },
-  navIcon: {
-    width: 36,
-    height: 36,
-    background: "rgba(255,120,0,0.15)",
-    border: "1px solid rgba(255,120,0,0.4)",
-    borderRadius: 2,
+  logo: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    fontSize: 18,
-  },
-  navTitle: {
-    fontWeight: 800,
-    fontSize: 18,
-    color: "#ff7800",
+    gap: 2,
+    fontFamily: "'Orbitron', sans-serif",
+    fontWeight: 900,
+    fontSize: 20,
     letterSpacing: 4,
   },
+  logoBracket: {
+    color: "#ff7800",
+    fontWeight: 400,
+  },
+  logoText: {
+    background: "linear-gradient(90deg, #ff7800, #ff3c00)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    textShadow: "0 0 30px rgba(255, 120, 0, 0.5)",
+  },
   navSub: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 9,
-    color: "rgba(255,120,0,0.4)",
-    letterSpacing: 3,
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 10,
+    color: "rgba(0, 255, 65, 0.6)",
+    letterSpacing: 2,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+  },
+  blink: {
+    fontSize: 8,
+    color: "#00ff41",
+    animation: "blink 1s ease-in-out infinite",
   },
   navCenter: {
     display: "flex",
@@ -241,125 +312,197 @@ const s = {
     alignItems: "center",
     gap: 4,
   },
-  statusOnline: {
+  statusBadge: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10,
-    color: "#22c55e",
-    letterSpacing: 2,
+    background: "rgba(0, 255, 65, 0.1)",
+    border: "1px solid rgba(0, 255, 65, 0.3)",
+    padding: "6px 14px",
+    borderRadius: 2,
   },
-  statusOffline: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10,
-    color: "#ff3c00",
-    letterSpacing: 2,
-  },
-  dotGreen: {
-    width: 7,
-    height: 7,
+  statusDot: {
+    width: 8,
+    height: 8,
     borderRadius: "50%",
-    background: "#22c55e",
-    animation: "pulse 2s ease-in-out infinite",
+    boxShadow: "0 0 10px currentColor",
   },
-  dotRed: {
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-    background: "#ff3c00",
-    animation: "pulse 1s ease-in-out infinite",
+  statusText: {
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 11,
+    color: "#00ff41",
+    letterSpacing: 3,
+    fontWeight: 600,
   },
-  lastUpdate: {
-    fontFamily: "'JetBrains Mono', monospace",
+  timestamp: {
+    fontFamily: "'Share Tech Mono', monospace",
     fontSize: 9,
     color: "rgba(255,255,255,0.2)",
     letterSpacing: 2,
   },
   logoutBtn: {
     background: "transparent",
-    border: "1px solid rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255, 60, 0, 0.3)",
     borderRadius: 2,
     padding: "8px 16px",
-    color: "rgba(255,255,255,0.4)",
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontWeight: 700,
-    fontSize: 13,
+    color: "#ff3c00",
+    fontFamily: "'Share Tech Mono', monospace",
+    fontWeight: 600,
+    fontSize: 12,
     letterSpacing: 2,
     cursor: "pointer",
     transition: "all 0.2s",
+    display: "flex",
+    gap: 4,
+  },
+  btnBracket: {
+    color: "rgba(255, 60, 0, 0.5)",
+    fontSize: 14,
   },
   alertBanner: {
     position: "relative",
-    zIndex: 10,
-    background: "rgba(255,30,0,0.12)",
-    borderBottom: "1px solid rgba(255,30,0,0.4)",
-    padding: "10px 32px",
-    fontFamily: "'Barlow Condensed', sans-serif",
+    zIndex: 100,
+    background: "linear-gradient(90deg, rgba(255, 0, 50, 0.2), rgba(255, 120, 0, 0.1), rgba(255, 0, 50, 0.2))",
+    borderBottom: "2px solid #ff073a",
+    padding: "12px 0",
+    overflow: "hidden",
+  },
+  alertMarquee: {
+    whiteSpace: "nowrap",
+    animation: "marquee 8s linear infinite",
+    fontFamily: "'Share Tech Mono', monospace",
     fontWeight: 700,
     fontSize: 13,
-    color: "#ff6b4a",
+    color: "#ff073a",
     letterSpacing: 3,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    animation: "fadeDown 0.3s ease",
-  },
-  alertBannerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: "#ff3c00",
-    animation: "pulse 0.8s ease-in-out infinite",
+    textShadow: "0 0 20px rgba(255, 7, 58, 0.8)",
   },
   main: {
     position: "relative",
-    zIndex: 5,
-    padding: "24px 32px 32px",
+    zIndex: 50,
+    padding: "24px 28px 28px",
     display: "flex",
     flexDirection: "column",
     gap: 20,
   },
-  kpiRow: {
+  kpiGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 12,
-  },
-  grid2: {
-    display: "grid",
-    gridTemplateColumns: "1.2fr 1fr",
     gap: 16,
   },
-  panel: {
-    background: "rgba(10,12,18,0.8)",
-    border: "1px solid rgba(255,120,0,0.12)",
-    borderRadius: 2,
-    padding: "20px",
+  contentGrid: {
+    display: "grid",
+    gridTemplateColumns: "1.3fr 1fr",
+    gap: 16,
+    flex: 1,
+  },
+  feedPanel: {
+    background: "rgba(5, 5, 5, 0.9)",
+    border: "1px solid rgba(255, 120, 0, 0.2)",
+    borderRadius: 4,
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    animation: "borderGlow 3s ease-in-out infinite",
+  },
+  eventsPanel: {
+    background: "rgba(5, 5, 5, 0.9)",
+    border: "1px solid rgba(255, 120, 0, 0.2)",
+    borderRadius: 4,
+    padding: 20,
     display: "flex",
     flexDirection: "column",
     gap: 16,
   },
   panelHeader: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    gap: 6,
     paddingBottom: 12,
     borderBottom: "1px solid rgba(255,255,255,0.05)",
   },
-  panelTitle: {
-    fontWeight: 800,
-    fontSize: 16,
-    color: "#f0f0f0",
-    letterSpacing: 3,
+  panelTitleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
   },
-  panelSub: {
-    fontFamily: "'JetBrains Mono', monospace",
+  panelIcon: {
+    color: "#ff7800",
+    fontSize: 16,
+    textShadow: "0 0 10px rgba(255, 120, 0, 0.8)",
+  },
+  panelTitle: {
+    fontFamily: "'Orbitron', sans-serif",
+    fontWeight: 700,
+    fontSize: 14,
+    color: "#ffffff",
+    letterSpacing: 4,
+  },
+  liveIndicator: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: "auto",
+    fontFamily: "'Share Tech Mono', monospace",
     fontSize: 10,
-    color: "rgba(255,120,0,0.5)",
+    color: "#00ff41",
     letterSpacing: 2,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#00ff41",
+    boxShadow: "0 0 10px #00ff41",
+    animation: "blink 1s ease-in-out infinite",
+  },
+  eventCount: {
+    marginLeft: "auto",
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 10,
+    color: "rgba(255, 120, 0, 0.6)",
+    letterSpacing: 2,
+  },
+  panelMeta: {
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 9,
+    color: "rgba(255,255,255,0.2)",
+    letterSpacing: 2,
+    paddingLeft: 26,
+  },
+  footer: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 0",
+    borderTop: "1px solid rgba(255, 120, 0, 0.1)",
+    marginTop: "auto",
+  },
+  footerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  terminalPrompt: {
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 11,
+    color: "#00ff41",
+    letterSpacing: 1,
+  },
+  typing: {
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.5)",
+    letterSpacing: 1,
+  },
+  footerRight: {
+    fontFamily: "'Share Tech Mono', monospace",
+    fontSize: 10,
+    color: "rgba(255,255,255,0.2)",
+    letterSpacing: 2,
+  },
+  version: {
+    color: "rgba(255, 120, 0, 0.4)",
   },
 };
